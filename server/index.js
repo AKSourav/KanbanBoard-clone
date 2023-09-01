@@ -1,0 +1,203 @@
+const express = require("express");
+const dotenv=require("dotenv");
+const connectDB = require("./config/db");
+const app = express();
+const cors = require("cors");
+const http = require("http").Server(app);
+const PORT = 4000;
+const path= require('path');
+const bodyParser=require('body-parser')
+const {notFound,errorHandler} =require('./middleware/errorMiddleware');
+const Task=require('./models/taskModel');
+
+dotenv.config();
+connectDB().then(()=>{
+
+	http.listen(PORT, () => {
+		console.log(`Server listening on ${PORT}`);
+	});
+
+});
+
+
+//routes
+const userRoutes=require('./routes/userRoutes');
+const taskRoutes=require('./routes/taskRoutes');
+const { updateTask } = require("./helper/updateTask");
+const { getTasks } = require("./helper/getTasks");
+
+app.use(express.json()); // to accept JSON Data
+app.use(bodyParser.json({extended: true})); // to accept JSON Data
+
+
+
+const socketIO = require("socket.io")(http, {
+	cors: {
+		origin: "*",
+	},
+});
+
+app.use(cors());
+app.use(express.urlencoded({ extended: true }));
+app.use(express.json());
+
+const fetchID = () => Math.random().toString(36).substring(2, 10);
+
+
+// let tasks = {
+// 	pending: {
+// 		title: "pending",
+// 		items: [
+// 			{
+// 				id: fetchID(),
+// 				title: "Send the Figma file to Dima",
+// 				comments: [],
+// 			},
+// 		],
+// 	},
+// 	ongoing: {
+// 		title: "ongoing",
+// 		items: [
+// 			{
+// 				id: fetchID(),
+// 				title: "Review GitHub issues",
+// 				comments: [
+// 					{
+// 						name: "David",
+// 						text: "Ensure you review before merging",
+// 						id: fetchID(),
+// 					},
+// 				],
+// 			},
+// 		],
+// 	},
+// 	completed: {
+// 		title: "completed",
+// 		items: [
+// 			{
+// 				id: fetchID(),
+// 				title: "Create technical contents",
+// 				comments: [
+// 					{
+// 						name: "Dima",
+// 						text: "Make sure you check the requirements",
+// 						id: fetchID(),
+// 					},
+// 				],
+// 			},
+// 		],
+// 	},
+// };
+
+let tasks = {
+	pending: {
+		title: "pending",
+		items: [
+			
+		],
+	},
+	ongoing: {
+		title: "ongoing",
+		items: [
+			
+		],
+	},
+	completed: {
+		title: "completed",
+		items: [
+			
+		],
+	},
+};
+
+getTasks().then((data)=>
+			{
+				tasks=data
+				console.log(tasks);
+			}
+);
+
+
+
+socketIO.on("connection", (socket) => {
+	console.log(`⚡: ${socket.id} user just connected!`);
+	
+	socket.on("createTask", (newTask) => {
+		tasks["pending"].items.push(newTask);
+		socket.emit("tasks", tasks);
+		
+	});
+
+	socket.on("updateTask", (newTask) => {
+		console.log('update task socket triggered!!',newTask)
+		const index=tasks[newTask.status].items.findIndex((e)=>String(e.id)===String(newTask.id));
+		console.log('index:',index)
+		if(index!==-1)
+		tasks[newTask.status].items[index]=newTask;
+		socket.emit("tasks", tasks);
+		
+	});
+
+	socket.on("deleteTask", (task) => {
+		console.log("here!",task);
+		tasks[task.status].items=tasks[task.status].items.filter((e)=>String(e.id)!==String(task.id));
+		socket.emit("tasks", tasks);
+		
+	});
+	
+	socket.on("taskDragged", (data) => {
+		const { taskId,source, destination } = data;
+		const status=destination.droppableId;
+		updateTask({taskId,status});
+		const itemMoved = {
+			...tasks[source.droppableId].items[source.index],
+		};
+		// console.log("ItemMoved>>> ", itemMoved);
+		tasks[source.droppableId].items.splice(source.index, 1);
+		tasks[destination.droppableId].items.splice(
+			destination.index,
+			0,
+			itemMoved
+			);
+			// console.log("Source >>>", tasks[source.droppableId].items);
+			// console.log("Destination >>>", tasks[destination.droppableId].items);
+			socket.emit("tasks", tasks);
+		});
+		
+		socket.on("fetchComments", (data) => {
+			const taskItems = tasks[data.category].items;
+			for (let i = 0; i < taskItems.length; i++) {
+				if (taskItems[i].id === data.id) {
+					socket.emit("comments", taskItems[i].comments);
+				}
+			}
+		});
+		socket.on("addComment", (data) => {
+			const taskItems = tasks[data.category].items;
+			for (let i = 0; i < taskItems.length; i++) {
+				if (taskItems[i].id === data.id) {
+					taskItems[i].comments.push({
+						name: data.userId,
+						text: data.comment,
+						id: fetchID(),
+					});
+					socket.emit("comments", taskItems[i].comments);
+				}
+			}
+		});
+		socket.on("disconnect", () => {
+			socket.disconnect();
+			console.log("🔥: A user disconnected");
+		});
+	});
+	
+	app.get("/api", async (req, res) => {
+	res.json(tasks);
+});
+
+app.use('/api/user',userRoutes)
+app.use('/api/task',taskRoutes)
+
+//error handling for invalid routes
+app.use(notFound);
+app.use(errorHandler);
