@@ -139,7 +139,7 @@ socketIO.on("connection", (socket) => {
 	});
 
 	socket.on("deleteTask", (task) => {
-		console.log("here!",task);
+		console.log("here is the task to be deleted!",task);
 		tasks[task.status].items=tasks[task.status].items.filter((e)=>String(e.id)!==String(task.id));
 		socket.emit("tasks", tasks);
 		
@@ -148,20 +148,17 @@ socketIO.on("connection", (socket) => {
 	socket.on("taskDragged", (data) => {
 		const { taskId,source, destination } = data;
 		const status=destination.droppableId;
-		updateTask({taskId,status});
-		const itemMoved = {
-			...tasks[source.droppableId].items[source.index],
-		};
-		// console.log("ItemMoved>>> ", itemMoved);
-		tasks[source.droppableId].items.splice(source.index, 1);
-		tasks[destination.droppableId].items.splice(
-			destination.index,
-			0,
-			itemMoved
-			);
+		const movedItem=tasks[source.droppableId].items.find((e)=>String(e.id)===String(taskId));
+		tasks[source.droppableId].items=tasks[source.droppableId].items.filter((e)=>String(e.id)!=String(taskId));
+		tasks[destination.droppableId].items.push(movedItem);
+		socket.emit("tasks", tasks);
 			// console.log("Source >>>", tasks[source.droppableId].items);
 			// console.log("Destination >>>", tasks[destination.droppableId].items);
-			socket.emit("tasks", tasks);
+			updateTask({taskId,status}).then(()=>getTasks().then((data)=>{
+				tasks=data;
+				socket.emit("tasks", tasks);
+			})
+			);
 		});
 		
 		socket.on("fetchComments", (data) => {

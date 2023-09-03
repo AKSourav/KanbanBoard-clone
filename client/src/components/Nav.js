@@ -1,34 +1,24 @@
-import React from "react";
-// import {
-// 	NovuProvider,
-// 	PopoverNotificationCenter,
-// 	NotificationBell,
-// } from "@novu/notification-center";
-// import { useNavigate } from "react-router-dom";
+import React, { useEffect } from "react";
 
-const Nav = () => {
-	// const navigate = useNavigate();
-
-	// const onNotificationClick = (notification) =>
-	// 	navigate(notification.cta.data.url);
+const Nav = ({auth,setAuth,navigate}) => {
+	useEffect(()=>{
+		if(!auth)
+		{
+			navigate('/auth');
+		}
+	},[auth,navigate]);
+	const handleSignOut=()=>{
+		localStorage.removeItem('profile');
+		setAuth();
+		navigate('/auth');
+	}
 	return (
 		<nav className='navbar'>
-			<h3>Team's todo list</h3>
-			{/* <div>
-				<NovuProvider
-					subscriberId='<SUBSCRIBER_ID>'
-					applicationIdentifier='<APP_ID>'
-				>
-					<PopoverNotificationCenter
-						onNotificationClick={onNotificationClick}
-						colorScheme='light'
-					>
-						{({ unseenCount }) => (
-							<NotificationBell unseenCount={unseenCount} />
-						)}
-					</PopoverNotificationCenter>
-				</NovuProvider>
-			</div> */}
+			<h3>Task List</h3>
+			{auth && <div className="actions_nav">
+				<p>{auth?.username}</p>
+				<button onClick={handleSignOut}>Sign Out</button>
+			</div>}
 		</nav>
 	);
 };

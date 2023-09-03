@@ -2,6 +2,7 @@ import axios from 'axios';
 import { useState } from 'react';
 import Button from 'react-bootstrap/Button';
 import Modal from 'react-bootstrap/Modal';
+import API from '../../api';
 
 function EditForm({task,socket}) {
   const [show, setShow] = useState(false);
@@ -63,11 +64,12 @@ const handleUpdate=async(e)=>{
         e.preventDefault();
         try{
 
-            const {data}=await axios.patch(url+`/api/task/${task.id}`,{title,description,assignedto:userId},{
-                headers:{
-                    authorization: `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY0ZjA4YWY3MjRjMTlhNDI0OTI3MmVkYyIsImlhdCI6MTY5MzQ4NTgxNiwiZXhwIjoxNjk2MDc3ODE2fQ.skS79j77nTs0nc4x-WbENfR3ODPfc49_VyYKCobqgnQ`
-                }
-            })
+            // const {data}=await axios.patch(url+`/api/task/${task.id}`,{title,description,assignedto:userId},{
+            //     headers:{
+            //         authorization: `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY0ZjA4YWY3MjRjMTlhNDI0OTI3MmVkYyIsImlhdCI6MTY5MzQ4NTgxNiwiZXhwIjoxNjk2MDc3ODE2fQ.skS79j77nTs0nc4x-WbENfR3ODPfc49_VyYKCobqgnQ`
+            //     }
+            // })
+            const {data}= await API.patch(`/api/task/${task.id}`,{title,description,assignedto:userId});
             data.assignId=[data.assignedto._id];
             data.admin=[data.admin.username];
             data.assignedto=[data.assignedto.username];

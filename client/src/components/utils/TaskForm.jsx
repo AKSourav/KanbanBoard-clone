@@ -1,5 +1,9 @@
 import axios from 'axios';
 import React, { useState } from 'react'
+import API from '../../api';
+
+import { ToastContainer, toast } from 'react-toastify'
+import 'react-toastify/dist/ReactToastify.css'
 
 const TaskForm = ({task,socket}) => {
     const url=`http://localhost:4000`
@@ -24,14 +28,19 @@ const TaskForm = ({task,socket}) => {
         setOpenD(true);
         setLoading(true);
         setAssign(e.target.value);
-        const {data}=await axios.get(url+`/api/user`,{
-            headers:{
-                authorization: `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY0ZjA4YWY3MjRjMTlhNDI0OTI3MmVkYyIsImlhdCI6MTY5MzQ4NTgxNiwiZXhwIjoxNjk2MDc3ODE2fQ.skS79j77nTs0nc4x-WbENfR3ODPfc49_VyYKCobqgnQ`
-            },
-            params:{
-                searchQuery:e.target.value
-            }
-        })
+        // const {data}=await axios.get(url+`/api/user`,{
+        //     headers:{
+        //         authorization: `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY0ZjA4YWY3MjRjMTlhNDI0OTI3MmVkYyIsImlhdCI6MTY5MzQ4NTgxNiwiZXhwIjoxNjk2MDc3ODE2fQ.skS79j77nTs0nc4x-WbENfR3ODPfc49_VyYKCobqgnQ`
+        //     },
+        //     params:{
+        //         searchQuery:e.target.value
+        //     }
+        // })
+        const {data}= await API.get(`/api/user`,{
+                params:{
+                    searchQuery:e.target.value
+                }
+            })
         setUsers(data);
         setLoading(false);
         console.log(users);
@@ -47,20 +56,29 @@ const TaskForm = ({task,socket}) => {
 		e.preventDefault();
         try{
 
-            const {data}=await axios.post(url+`/api/task`,{title,description,assignedto:userId._id},{
-                headers:{
-                    authorization: `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY0ZjA4YWY3MjRjMTlhNDI0OTI3MmVkYyIsImlhdCI6MTY5MzQ4NTgxNiwiZXhwIjoxNjk2MDc3ODE2fQ.skS79j77nTs0nc4x-WbENfR3ODPfc49_VyYKCobqgnQ`
-                }
-            })
+            // const {data}=await axios.post(url+`/api/task`,{title,description,assignedto:userId._id},{
+            //     headers:{
+            //         authorization: `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY0ZjA4YWY3MjRjMTlhNDI0OTI3MmVkYyIsImlhdCI6MTY5MzQ4NTgxNiwiZXhwIjoxNjk2MDc3ODE2fQ.skS79j77nTs0nc4x-WbENfR3ODPfc49_VyYKCobqgnQ`
+            //     }
+            // })
+
+            const {data} = await API.post(`/api/task`,{title,description,assignedto:userId._id})
+
             data.assignId=[data.assignedto._id];
             data.admin=[data.admin.username];
             data.assignedto=[data.assignedto.username];
             data.id=data._id;
             console.log(data);
+            toast.success('Successfully created!', {
+                position: toast.POSITION.TOP_RIGHT,
+              })
             socket.emit("createTask", data);
         }
         catch(err){
             console.log(err.message);
+            toast.error(err.response.data.message, {
+                position: toast.POSITION.TOP_RIGHT,
+              })
         }
 		setTitle("");
         setDesc('');
@@ -90,6 +108,7 @@ const TaskForm = ({task,socket}) => {
     
   return (
     <>
+        <ToastContainer/>
         <button className={task?"edit_button":"addTodoBtn"} type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasScrolling" aria-controls="offcanvasScrolling">{task?'Edit Task':'Create'}</button>
         <div className="offcanvas offcanvas-start" data-bs-scroll="true" data-bs-backdrop="false" tabindex="-1" id="offcanvasScrolling" aria-labelledby="offcanvasScrollingLabel">
             <div className="form__input">

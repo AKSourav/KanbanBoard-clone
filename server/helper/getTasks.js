@@ -17,7 +17,7 @@ module.exports.getTasks=async()=>{
         {
           $group: {
             _id: '$status',
-            items: { $push:{id:'$_id',title:'$title',description:'$description',comments:'$comments',status:'$status',assignedto:'$assignedto.username',assignId:'$assignedto._id',admin:'$admin.username'} }
+            items: { $push:{id:'$_id',title:'$title',description:'$description',comments:'$comments',status:'$status',assignedto:'$assignedto.username',assignId:'$assignedto._id',admin:'$admin.username',adminId:'$admin._id'} }
           }
         }
       ])
