@@ -4,7 +4,7 @@ const connectDB = require("./config/db");
 const app = express();
 const cors = require("cors");
 const http = require("http").Server(app);
-const PORT = 4000;
+const PORT = 4000 || process.env.PORT;
 const path= require('path');
 const bodyParser=require('body-parser')
 const {notFound,errorHandler} =require('./middleware/errorMiddleware');
@@ -41,7 +41,6 @@ app.use(cors());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
-const fetchID = () => Math.random().toString(36).substring(2, 10);
 
 let tasks = {
 	pending: {
@@ -115,27 +114,27 @@ socketIO.on("connection", (socket) => {
 			);
 		});
 		
-		socket.on("fetchComments", (data) => {
-			const taskItems = tasks[data.category].items;
-			for (let i = 0; i < taskItems.length; i++) {
-				if (taskItems[i].id === data.id) {
-					socket.emit("comments", taskItems[i].comments);
-				}
-			}
-		});
-		socket.on("addComment", (data) => {
-			const taskItems = tasks[data.category].items;
-			for (let i = 0; i < taskItems.length; i++) {
-				if (taskItems[i].id === data.id) {
-					taskItems[i].comments.push({
-						name: data.userId,
-						text: data.comment,
-						id: fetchID(),
-					});
-					socket.emit("comments", taskItems[i].comments);
-				}
-			}
-		});
+		// socket.on("fetchComments", (data) => {
+		// 	const taskItems = tasks[data.category].items;
+		// 	for (let i = 0; i < taskItems.length; i++) {
+		// 		if (taskItems[i].id === data.id) {
+		// 			socket.emit("comments", taskItems[i].comments);
+		// 		}
+		// 	}
+		// });
+		// socket.on("addComment", (data) => {
+		// 	const taskItems = tasks[data.category].items;
+		// 	for (let i = 0; i < taskItems.length; i++) {
+		// 		if (taskItems[i].id === data.id) {
+		// 			taskItems[i].comments.push({
+		// 				name: data.userId,
+		// 				text: data.comment,
+		// 				id: fetchID(),
+		// 			});
+		// 			socket.emit("comments", taskItems[i].comments);
+		// 		}
+		// 	}
+		// });
 		socket.on("disconnect", () => {
 			socket.disconnect();
 			console.log("🔥: A user disconnected");
