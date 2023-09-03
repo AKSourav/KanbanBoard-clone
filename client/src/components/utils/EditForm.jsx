@@ -4,6 +4,9 @@ import Button from 'react-bootstrap/Button';
 import Modal from 'react-bootstrap/Modal';
 import API from '../../api';
 
+import { ToastContainer, toast } from 'react-toastify'
+import 'react-toastify/dist/ReactToastify.css'
+
 function EditForm({task,socket}) {
   const [show, setShow] = useState(false);
 
@@ -17,7 +20,6 @@ function EditForm({task,socket}) {
     setShow(true)
     };
 
-  const url=`http://localhost:4000`
   const [title, setTitle] = useState("");
   const [description, setDesc] = useState("");
   const [assignedto, setAssign] = useState("");
@@ -40,10 +42,7 @@ function EditForm({task,socket}) {
     setOpenD(true);
     setLoading(true);
     setAssign(e.target.value);
-    const {data}=await axios.get(url+`/api/user`,{
-        headers:{
-            authorization: `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY0ZjA4YWY3MjRjMTlhNDI0OTI3MmVkYyIsImlhdCI6MTY5MzQ4NTgxNiwiZXhwIjoxNjk2MDc3ODE2fQ.skS79j77nTs0nc4x-WbENfR3ODPfc49_VyYKCobqgnQ`
-        },
+    const {data}=await API.get(`/api/user`,{
         params:{
             searchQuery:e.target.value
         }
@@ -63,22 +62,23 @@ const handleUpdate=async(e)=>{
     setLoading(true);
         e.preventDefault();
         try{
-
-            // const {data}=await axios.patch(url+`/api/task/${task.id}`,{title,description,assignedto:userId},{
-            //     headers:{
-            //         authorization: `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY0ZjA4YWY3MjRjMTlhNDI0OTI3MmVkYyIsImlhdCI6MTY5MzQ4NTgxNiwiZXhwIjoxNjk2MDc3ODE2fQ.skS79j77nTs0nc4x-WbENfR3ODPfc49_VyYKCobqgnQ`
-            //     }
-            // })
             const {data}= await API.patch(`/api/task/${task.id}`,{title,description,assignedto:userId});
             data.assignId=[data.assignedto._id];
+            data.adminId=[data.admin._id];
             data.admin=[data.admin.username];
             data.assignedto=[data.assignedto.username];
             data.id=data._id;
             console.log("updateditem:",data);
             socket.emit("updateTask", data);
+            toast.success('Successfully Edited!', {
+                position: toast.POSITION.TOP_RIGHT,
+              })
         }
         catch(err){
             console.log(err.message);
+            toast.error(err.response.data.message, {
+                position: toast.POSITION.TOP_RIGHT,
+              })
         }
         setLoading(false);
         setShow(false);
@@ -87,6 +87,7 @@ const handleUpdate=async(e)=>{
   return (
     <>
       <button className="edit_button" onClick={handleShow}>Edit Task</button>
+        <ToastContainer/>
 
       <Modal show={show} onHide={handleClose}>
         <Modal.Header closeButton>

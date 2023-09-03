@@ -7,21 +7,17 @@ import EditForm from './EditForm'
 import API from '../../api'
 
 const DraggableTask = ({task,item,index,socket,user}) => {
-    const url=`http://localhost:4000`;
     const Navigate=useNavigate();
     const location=useLocation();
 
-    const isAccess=(String(item.assignId[0])===String(user._id) || String(item.adminId[0])===String(user._id))
+    const isAdmin=(String(item.adminId[0])===String(user._id))
+    const isAssigned=(String(item.assignId[0])===String(user._id))
+    const isAccess=(isAdmin || isAssigned)
     
 
     const handleDelete=async(e)=>{
         e.preventDefault();
         try{
-            // axios.delete(url+`/api/task/${item.id}`,{
-            //     headers:{
-            //         authorization: `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY0ZjA4YWY3MjRjMTlhNDI0OTI3MmVkYyIsImlhdCI6MTY5MzQ4NTgxNiwiZXhwIjoxNjk2MDc3ODE2fQ.skS79j77nTs0nc4x-WbENfR3ODPfc49_VyYKCobqgnQ`
-            //     }
-            // })
             API.delete(`/api/task/${item.id}`);
             console.log("Deleted!");
             socket.emit('deleteTask',item);
@@ -46,11 +42,11 @@ const DraggableTask = ({task,item,index,socket,user}) => {
                 >
                     <h3>{item.title}</h3>
                     <h5>{item.description}</h5>
-                    <h9>assignedto: <Link to={`/user/${item.assignedto[0]}`}>{item.assignedto[0]}</Link></h9>
+                    <h9>assignedto: <Link to={`/user/${item.assignedto[0]}`}>{isAssigned?'YOU':item.assignedto[0]}</Link></h9>
                     <br/>
-                    <h9>assignedBy: <Link to={`/user/${item.admin[0]}`}>{item.admin[0]}</Link></h9>
-                    {isAccess && <div className="actions">
+                    <h9>assignedBy: <Link to={`/user/${item.admin[0]}`}>{isAdmin?'YOU':item.admin[0]}</Link></h9>
                         {/* <TaskForm task={item} socket={socket}/> */}
+                    {isAccess && <div className="actions">
                         <EditForm task={item} socket={socket}/>
                         <button onClick={handleDelete} className="delete_button">Delete Task</button>
                     </div>}

@@ -28,14 +28,6 @@ const TaskForm = ({task,socket}) => {
         setOpenD(true);
         setLoading(true);
         setAssign(e.target.value);
-        // const {data}=await axios.get(url+`/api/user`,{
-        //     headers:{
-        //         authorization: `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY0ZjA4YWY3MjRjMTlhNDI0OTI3MmVkYyIsImlhdCI6MTY5MzQ4NTgxNiwiZXhwIjoxNjk2MDc3ODE2fQ.skS79j77nTs0nc4x-WbENfR3ODPfc49_VyYKCobqgnQ`
-        //     },
-        //     params:{
-        //         searchQuery:e.target.value
-        //     }
-        // })
         const {data}= await API.get(`/api/user`,{
                 params:{
                     searchQuery:e.target.value
@@ -55,16 +47,10 @@ const TaskForm = ({task,socket}) => {
 	const handleSubmit = async (e) => {
 		e.preventDefault();
         try{
-
-            // const {data}=await axios.post(url+`/api/task`,{title,description,assignedto:userId._id},{
-            //     headers:{
-            //         authorization: `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY0ZjA4YWY3MjRjMTlhNDI0OTI3MmVkYyIsImlhdCI6MTY5MzQ4NTgxNiwiZXhwIjoxNjk2MDc3ODE2fQ.skS79j77nTs0nc4x-WbENfR3ODPfc49_VyYKCobqgnQ`
-            //     }
-            // })
-
             const {data} = await API.post(`/api/task`,{title,description,assignedto:userId._id})
 
             data.assignId=[data.assignedto._id];
+            data.adminId=[data.admin._id];
             data.admin=[data.admin.username];
             data.assignedto=[data.assignedto.username];
             data.id=data._id;
